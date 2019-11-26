@@ -1,0 +1,38 @@
+version: 1
+kind: group
+
+hptuning:
+  concurrency: 20
+  matrix:
+    blockidx:
+      range: '0:20:1'
+
+environment:
+  node_selector:
+    aws/type: p3.2xlarge
+  resources:
+    gpu:
+      requests: 1
+      limits: 1
+
+declarations:
+  blocksize: 20
+  nvar: 1
+  outdir: /mnt/internal/deka/deka-v2-fastphotostyle/images/
+  synthetic_glob: /mnt/internal/deka/deka-v2/processed/train/images/*.png
+  real_glob: /mnt/clients/deka/validation/images/*.png
+
+build:
+  image: 'aireverie/fastphotostyle'
+
+run:
+  cmd: >-
+    set -o noglob; python fastphoto_translator_deka.py
+    --synthetic_glob {{ synthetic_glob }}
+    --real-glob {{ real_glob }}
+    --blocksize {{ blocksize }}
+    --blockidx {{ blockidx }}
+    --outdir {{ outdir }}
+    --nvar {{ nvar }}
+    --minsize 256
+    --maxsize 960

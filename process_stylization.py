@@ -37,35 +37,33 @@ class Timer:
         print(self.msg % (time.time() - self.start_time))
 
 
-def memory_limit_image_resize(cont_img):
-    # prevent too small or too big images
-    MINSIZE=256
-    MAXSIZE=960
+def memory_limit_image_resize(cont_img, minsize=256, maxsize=960):
     orig_width = cont_img.width
     orig_height = cont_img.height
-    if max(cont_img.width,cont_img.height) < MINSIZE:
+    if max(cont_img.width,cont_img.height) < minsize:
         if cont_img.width > cont_img.height:
-            cont_img.thumbnail((int(cont_img.width*1.0/cont_img.height*MINSIZE), MINSIZE), Image.BICUBIC)
+            cont_img.thumbnail((int(cont_img.width*1.0/cont_img.height*minsize), minsize), Image.BICUBIC)
         else:
-            cont_img.thumbnail((MINSIZE, int(cont_img.height*1.0/cont_img.width*MINSIZE)), Image.BICUBIC)
-    if min(cont_img.width,cont_img.height) > MAXSIZE:
+            cont_img.thumbnail((minsize, int(cont_img.height*1.0/cont_img.width*minsize)), Image.BICUBIC)
+    if min(cont_img.width,cont_img.height) > maxsize:
         if cont_img.width > cont_img.height:
-            cont_img.thumbnail((MAXSIZE, int(cont_img.height*1.0/cont_img.width*MAXSIZE)), Image.BICUBIC)
+            cont_img.thumbnail((maxsize, int(cont_img.height*1.0/cont_img.width*maxsize)), Image.BICUBIC)
         else:
-            cont_img.thumbnail(((int(cont_img.width*1.0/cont_img.height*MAXSIZE), MAXSIZE)), Image.BICUBIC)
+            cont_img.thumbnail(((int(cont_img.width*1.0/cont_img.height*maxsize), maxsize)), Image.BICUBIC)
     print("Resize image: (%d,%d)->(%d,%d)" % (orig_width, orig_height, cont_img.width, cont_img.height))
     return cont_img.width, cont_img.height
 
 
 def stylization(stylization_module, smoothing_module, content_image_path, style_image_path, content_seg_path, style_seg_path, output_image_path,
-                cuda, save_intermediate, no_post, cont_seg_remapping=None, styl_seg_remapping=None):
+                cuda, save_intermediate, no_post, minsize, maxsize, cont_seg_remapping=None, styl_seg_remapping=None):
     # Load image
     with torch.no_grad():
         cont_img = Image.open(content_image_path).convert('RGB')
+        width, height = cont_img.size
         styl_img = Image.open(style_image_path).convert('RGB')
 
-        new_cw, new_ch = memory_limit_image_resize(cont_img)
-        new_sw, new_sh = memory_limit_image_resize(styl_img)
+        new_cw, new_ch = memory_limit_image_resize(cont_img, minsize, maxsize)
+        new_sw, new_sh = memory_limit_image_resize(styl_img, minsize, maxsize)
         cont_pilimg = cont_img.copy()
         cw = cont_pilimg.width
         ch = cont_pilimg.height
@@ -90,7 +88,8 @@ def stylization(stylization_module, smoothing_module, content_image_path, style_
         # cont_img = Variable(cont_img, volatile=True)
         # styl_img = Variable(styl_img, volatile=True)
 
-        cont_seg = np.asarray(cont_seg)
+        # TODO (@Thomas) this is only for the deka image format...
+        cont_seg = np.asarray(cont_seg)[..., 0]
         styl_seg = np.asarray(styl_seg)
         if cont_seg_remapping is not None:
             cont_seg = cont_seg_remapping.process(cont_seg)
@@ -133,5 +132,5 @@ def stylization(stylization_module, smoothing_module, content_image_path, style_
             if no_post is False:
                 with Timer("Elapsed time in post processing: %f"):
                     out_img = smooth_filter(out_img, cont_pilimg, f_radius=15, f_edge=1e-1)
-            out_img.save(output_image_path)
+            out_img.resize((width, height)).save(output_image_path)
 
