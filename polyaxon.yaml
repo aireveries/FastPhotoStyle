@@ -17,10 +17,10 @@ environment:
 
 declarations:
   blocksize: 20
-  nvar: 1
-  outdir: /mnt/internal/deka/deka-v2-fastphotostyle/images/
-  synthetic_glob: /mnt/internal/deka/deka-v2/processed/train/images/*.png
-  real_glob: /mnt/clients/deka/validation/images/*.png
+  nvar: 2
+  outdir: /mnt/internal/deka/deka-v2-fastphotostyle-curbs/images/
+  synthetic_glob: /mnt/internal/deka/deka-v2/processed/curbs/images/*.png
+  real_glob: /mnt/clients/deka/validation/curbs/*.png
 
 build:
   image: 'aireverie/fastphotostyle'

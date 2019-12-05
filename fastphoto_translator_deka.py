@@ -2,6 +2,7 @@
 # coding: utf-8
 import argparse
 import os
+import random
 from glob import glob
 from pathlib import Path
 
@@ -58,9 +59,20 @@ def process_image(p_wct, p_pro, content_image_path, content_seg_path=[], style_i
 def runner(args):
     synthetic_images_list = sorted(list(glob(args.synthetic_glob)))
     print('Synthetic images: {}'.format(len(synthetic_images_list)))
+    random.shuffle(synthetic_images_list)
     # real images list
     real_images_list = sorted(list(glob(args.real_glob)))
     print('Real images: {}'.format(len(real_images_list)))
+
+    # because of the redish color
+    get_date = lambda k: '-'.join(os.path.basename(k).split('-')[:3])
+    subset1 = []
+    subset2 = []
+    for c in real_images_list:
+        if get_date(c) == '2019-04-11' or get_date(c) == '2019-05-29':
+            subset1.append(c)
+        else:
+            subset2.append(c)
 
     # load model
     p_wct, p_pro = load_model(fast=args.fast)
@@ -69,17 +81,24 @@ def runner(args):
     for sip_ix, synthetic_image_path in enumerate(synthetic_images_list[args.blockidx::args.blocksize]):
         print("Progress: {}/{}".format(sip_ix, len(synthetic_images_list[args.blockidx::args.blocksize])))
         # pick nvar random real images
-        real_images = [real_images_list[i] for i in list(np.random.permutation(len(real_images_list))[:args.nvar])]
-
+        if args.nvar == 1:
+            real_images = np.random.choice(subset1 + subset2)
+        else:
+            real_images = np.random.choice(subset1, int(args.nvar/2)).tolist() + \
+                          np.random.choice(subset2, int(args.nvar/2)).tolist()
+        content_seg_path = synthetic_image_path.replace('raw', 'labels').replace('images', 'labels')
         for style_ix, real_image_path in enumerate(real_images):
             # image name
+            style_seg_path = real_image_path.replace('raw', 'labels').replace('images', 'labels').replace('curbs', 'labels')
             bname = os.path.basename(synthetic_image_path)
             bname = os.path.splitext(bname)
             bname = bname[0] + "-" + str(style_ix) + bname[1]
             bname = os.path.abspath(os.path.join(args.outdir, bname))
-
-            process_image(p_wct, p_pro, content_image_path=synthetic_image_path, style_image_path=real_image_path,
-                          output_image_path=bname , no_post=True, minsize=args.minsize, maxsize=args.maxsize)
+            if os.path.isfile(bname):
+                continue
+            process_image(p_wct, p_pro, content_image_path=synthetic_image_path, content_seg_path=content_seg_path,
+                          style_image_path=real_image_path, style_seg_path=style_seg_path, output_image_path=bname,
+                          no_post=True, minsize=args.minsize, maxsize=args.maxsize)
 
 
 def main():
