@@ -82,7 +82,11 @@ def runner(args):
         print("Progress: {}/{}".format(sip_ix, len(synthetic_images_list[args.blockidx::args.blocksize])))
         # pick nvar random real images
         if args.nvar == 1:
-            real_images = np.random.choice(subset1 + subset2)
+            coin = np.random.rand()
+            if coin > 0.5:
+                real_images = np.random.choice(subset1, 1)
+            else:
+                real_images = np.random.choice(subset2, 1)
         else:
             real_images = np.random.choice(subset1, int(args.nvar/2)).tolist() + \
                           np.random.choice(subset2, int(args.nvar/2)).tolist()
@@ -96,9 +100,18 @@ def runner(args):
             bname = os.path.abspath(os.path.join(args.outdir, bname))
             if os.path.isfile(bname):
                 continue
-            process_image(p_wct, p_pro, content_image_path=synthetic_image_path, content_seg_path=content_seg_path,
-                          style_image_path=real_image_path, style_seg_path=style_seg_path, output_image_path=bname,
-                          no_post=True, minsize=args.minsize, maxsize=args.maxsize)
+
+            # process_image(p_wct, p_pro, content_image_path=synthetic_image_path, content_seg_path=content_seg_path,
+            #               style_image_path=real_image_path, style_seg_path=style_seg_path, output_image_path=bname,
+            #               no_post=True, minsize=args.minsize, maxsize=args.maxsize)
+
+            try:
+                process_image(p_wct, p_pro, content_image_path=synthetic_image_path, content_seg_path=content_seg_path,
+                              style_image_path=real_image_path, style_seg_path=style_seg_path, output_image_path=bname,
+                              no_post=True, minsize=args.minsize, maxsize=args.maxsize)
+            except RuntimeError:
+                print(synthetic_image_path, content_seg_path)
+                continue
 
 
 def main():

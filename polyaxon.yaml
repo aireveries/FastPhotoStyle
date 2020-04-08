@@ -9,7 +9,7 @@ hptuning:
 
 environment:
   node_selector:
-    aws/type: p3.2xlarge
+    aws/type: p2.xlarge
   resources:
     gpu:
       requests: 1
@@ -18,9 +18,9 @@ environment:
 declarations:
   blocksize: 20
   nvar: 2
-  outdir: /mnt/internal/deka/deka-v2-fastphotostyle-curbs/images/
-  synthetic_glob: /mnt/internal/deka/deka-v2/processed/curbs/images/*.png
-  real_glob: /mnt/clients/deka/validation/curbs/*.png
+  outdir: /mnt/internal/deka/deka-v3-fastphotostyle-curbs/images2/
+  synthetic_glob: /mnt/internal/deka/deka-v3/processed/train/images/*.png
+  real_glob: /mnt/clients/deka/validation/images/*.png
 
 build:
   image: 'aireverie/fastphotostyle'
@@ -34,5 +34,5 @@ run:
     --blockidx {{ blockidx }}
     --outdir {{ outdir }}
     --nvar {{ nvar }}
-    --minsize 256
-    --maxsize 960
+    --minsize 480
+    --maxsize 640

@@ -128,7 +128,7 @@ class PhotoWCT(nn.Module):
         iden = torch.eye(cFSize[0])  # .double()
         if self.is_cuda:
             iden = iden.cuda()
-        
+
         contentConv = torch.mm(cont_feat, cont_feat.t()).div(cFSize[1] - 1) + iden
         # del iden
         c_u, c_e, c_v = torch.svd(contentConv, some=False)
